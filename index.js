@@ -20,18 +20,52 @@ async function connect() {
 
 //update connect function with QOL
 
+import { ethers } from "./ethers-5.6.esm.min.js"
+import { abi, contractAddress } from "./constants.js"
+
+const connectButton = document.getElementById("connectButton")
+const fundButton = document.getElementById("fundButton")
+connectButton.onclick = connect
+fundButton.onclick = fund
+
+console.log(ethers)
+
 async function connect() {
-  if (typeof window.ethereum !== "undefined") {
-    try {
-      await ethereum.request({ method: "eth_requestAccounts" });
-    } catch (error) {
-      console.log(error);
+    if (typeof window.ethereum !== "undefined") {
+        try {
+            await ethereum.request({ method: "eth_requestAccounts" })
+        } catch (error) {
+            console.log(error)
+        }
+        document.getElementById("connectButton").innerHTML = "Connected"
+        const accounts = await ethereum.request({ method: "eth_accounts" })
+        console.log(accounts)
+    } else {
+        document.getElementById("connectButton").innerHTML =
+            "Please install metamask"
     }
-    document.getElementById("connectButton").innerHTML = "Connected";
-    const accounts = await ethereum.request({ method: "eth_accounts" });
-    console.log(accounts);
-  } else {
-    document.getElementById("connectButton").innerHTML =
-      "Please install metamask";
-  }
+}
+
+async function fund() {
+    const ethAmount = "55"
+    console.log(`funding with ${ethAmount} ...`)
+    if (typeof window.ethereum !== "undefined") {
+        //provider / connection to the blockchain ==> RPC, built in in metamask
+        // signer / wallet / someone with eth-gas ==> private key, built in in metamask
+        //contract we are interacting with
+        //  ABI - Address
+
+        const provider = new ethers.providers.Web3Provider(window.ethereum)
+        const signer = provider.getSigner()
+        console.log(signer)
+        const contract = new ethers.Contract(contractAddress, abi, signer)
+
+        try {
+            const txRespone = await contract.fund({
+                value: ethers.utils.parseEther(ethAmount),
+            })
+        } catch (error) {
+            console.log(error)
+        }
+    }
 }
