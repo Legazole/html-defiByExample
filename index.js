@@ -25,10 +25,30 @@ import { abi, contractAddress } from "./constants.js"
 
 const connectButton = document.getElementById("connectButton")
 const fundButton = document.getElementById("fundButton")
+const balanceButton = document.getElementById("balanceButton")
+balanceButton.onclick = balance
 connectButton.onclick = connect
 fundButton.onclick = fund
 
 console.log(ethers)
+
+async function balance() {
+    if (typeof window.ethereum !== "undefined") {
+        try {
+            const provider = new ethers.providers.Web3Provider(window.ethereum)
+            const balance = await provider.getBalance(contractAddress)
+            console.log(ethers.utils.formatEther(balance))
+            //change the button into the actual balance
+            document.getElementById("balanceButton").innerHTML =
+                ethers.utils.formatEther(balance)
+        } catch (error) {
+            console.log(error)
+        }
+    } else {
+        document.getElementById("balanceButton").innerHTML =
+            "Please install metamask"
+    }
+}
 
 async function connect() {
     if (typeof window.ethereum !== "undefined") {
@@ -47,7 +67,7 @@ async function connect() {
 }
 
 async function fund() {
-    const ethAmount = "55"
+    const ethAmount = document.getElementById("ethAmount").value
     console.log(`funding with ${ethAmount} ...`)
     if (typeof window.ethereum !== "undefined") {
         //provider / connection to the blockchain ==> RPC, built in in metamask
@@ -64,8 +84,23 @@ async function fund() {
             const txRespone = await contract.fund({
                 value: ethers.utils.parseEther(ethAmount),
             })
+            await listenForTransactionMine(txRespone, provider)
+            console.log("done")
         } catch (error) {
             console.log(error)
         }
     }
+}
+
+function listenForTransactionMine(txRespone, provider) {
+    console.log(`Mining ${txRespone.hash}...`)
+    return new Promise((resolve, reject) => {
+        provider.once(txRespone.hash, (txReceipt) => {
+            console.log(
+                `Completed with ${txReceipt.confirmations} confirmations`
+            )
+            resolve()
+        })
+    })
+    // create a listener for the blockchain
 }
